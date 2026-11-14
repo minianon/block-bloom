@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { W, H, PANEL, GREEN, text, loadIcons, drawBlock, button, settingsRow, goTo, fitOrientation } from './ui.ts';
 import { COLORS, decodeSave } from './logic.ts';
+import { loadingFinished } from './ads.ts';
 
 const TILE = 104;
 
@@ -16,7 +17,8 @@ export class Title extends Phaser.Scene {
     this.input.enabled = true;
     this.cameras.main.fadeIn(300, 20, 22, 63);
     document.body.classList.remove('dim');
-    document.getElementById('splash')?.remove(); // page's loading logo hands over to the animated one
+    const splash = document.getElementById('splash');
+    if (splash) { splash.remove(); loadingFinished(); } // page's loading logo hands over to the animated one: loading is done
     this.petals();
 
     // Logo: one glossy tile per letter, dropping in with a bounce, then gently bobbing.

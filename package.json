@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "node --test src/logic.test.ts",
-    "build:crazygames": "tsc && vite build --mode crazygames --outDir dist-crazygames && cd dist-crazygames && rm -f ../block-bloom-crazygames.zip && zip -qr ../block-bloom-crazygames.zip ."
+    "build:crazygames": "tsc && vite build --mode crazygames --outDir dist-crazygames && cd dist-crazygames && rm -f ../block-bloom-crazygames.zip && zip -qr ../block-bloom-crazygames.zip .",
+    "build:poki": "tsc && vite build --mode poki --outDir dist-poki && cd dist-poki && rm -f ../block-bloom-poki.zip && zip -qr ../block-bloom-poki.zip ."
   },
   "devDependencies": {
     "typescript": "~7.0.2",

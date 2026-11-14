@@ -5,7 +5,7 @@ import {
   type Board, type Piece, type Cell,
 } from './logic.ts';
 import { sfx } from './sfx.ts';
-import { initPlatform, showRewarded, showInterstitial, gameplayStart, gameplayStop, happytime } from './ads.ts';
+import { initPlatform, showRewarded, showInterstitial, gameplayStart, gameplayStop, happytime, INTERSTITIAL_EVERY } from './ads.ts';
 import { W, H, PANEL, GREEN, ROSE, BLUE, text, loadIcons, drawBlock, button, iconButton, settingsRow, modal, closeModal, goTo, fitOrientation, wideScreen } from './ui.ts';
 import { Title } from './title.ts';
 
@@ -23,7 +23,6 @@ function layout() {
 const boardMidX = () => BOARD_X + SIZE * CELL / 2;
 const TRAY_SCALE = 0.55;
 const LIFT = 40; // gap between the finger and the bottom of a dragged piece, so the finger never hides it
-const INTERSTITIAL_EVERY = 2; // games between full-screen ads
 const CELL_BG = 0x1c2057;
 
 let gamesFinished = 0; // survives scene restarts
