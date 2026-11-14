@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { W, H, PANEL, GREEN, text, loadIcons, drawBlock, button, settingsRow, goTo } from './ui.ts';
+import { W, H, PANEL, GREEN, text, loadIcons, drawBlock, button, settingsRow, goTo, fitOrientation } from './ui.ts';
 import { COLORS, decodeSave } from './logic.ts';
 
 const TILE = 104;
@@ -11,6 +11,8 @@ export class Title extends Phaser.Scene {
   preload() { loadIcons(this); }
 
   create() {
+    fitOrientation(this.game);
+    const wide = W > H;
     this.input.enabled = true;
     this.cameras.main.fadeIn(300, 20, 22, 63);
     document.body.classList.remove('dim');
@@ -19,7 +21,7 @@ export class Title extends Phaser.Scene {
     // Logo: one glossy tile per letter, dropping in with a bounce, then gently bobbing.
     const words = ['BLOCK', 'BLOOM'];
     words.forEach((word, row) => {
-      const y = 330 + row * (TILE + 18);
+      const y = (wide ? 110 : 330) + row * (TILE + 18);
       [...word].forEach((ch, i) => {
         const x = W / 2 + (i - (word.length - 1) / 2) * (TILE + 8);
         const g = this.add.graphics();
@@ -43,20 +45,20 @@ export class Title extends Phaser.Scene {
     const pill = this.add.graphics().fillStyle(PANEL, 0.45).fillRoundedRect(-130, -32, 260, 64, 32);
     const crown = this.add.image(-92, -1, 'crown').setDisplaySize(38, 38);
     const bestText = this.add.text(-60, 0, `Best ${best}`, text(32)).setOrigin(0, 0.5);
-    const bestPill = this.add.container(W / 2, 640, [pill, crown, bestText]).setAlpha(0);
+    const bestPill = this.add.container(W / 2, wide ? 375 : 640, [pill, crown, bestText]).setAlpha(0);
     this.tweens.add({ targets: bestPill, alpha: 1, delay: 1000, duration: 400 });
 
     // Play (or Continue a saved run), popping in then breathing.
     const play = save
-      ? button(this, W / 2, 820, 480, 'Continue', 'play', GREEN, () => goTo(this, 'play', { resume: true }), `Score ${save.points}`)
-      : button(this, W / 2, 820, 480, 'Play', 'play', GREEN, () => goTo(this, 'play', { resume: false }));
+      ? button(this, W / 2, wide ? 490 : 820, 480, 'Continue', 'play', GREEN, () => goTo(this, 'play', { resume: true }), `Score ${save.points}`)
+      : button(this, W / 2, wide ? 490 : 820, 480, 'Play', 'play', GREEN, () => goTo(this, 'play', { resume: false }));
     play.setScale(0);
     this.tweens.add({ targets: play, scale: 1, delay: 1100, duration: 420, ease: 'Back.easeOut', onComplete: () => {
       this.tweens.add({ targets: play, scale: 1.05, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     } });
 
     if (save) {
-      const fresh = this.add.text(W / 2, 950, 'New game', text(32, '#ffffff', '600')).setOrigin(0.5).setAlpha(0)
+      const fresh = this.add.text(W / 2, wide ? 615 : 950, 'New game', text(32, '#ffffff', '600')).setOrigin(0.5).setAlpha(0)
         .setInteractive({ useHandCursor: true });
       fresh.once('pointerup', () => {
         try { localStorage.removeItem('bb-save'); } catch { /* storage blocked */ }
@@ -65,7 +67,7 @@ export class Title extends Phaser.Scene {
       this.tweens.add({ targets: fresh, alpha: 0.8, delay: 1300, duration: 400 });
     }
 
-    const settings = settingsRow(this, W / 2, H - 210).setAlpha(0);
+    const settings = (wide ? settingsRow(this, W - 150, H - 120) : settingsRow(this, W / 2, H - 210)).setAlpha(0);
     this.tweens.add({ targets: settings, alpha: 1, delay: 1300, duration: 400 });
   }
 

@@ -19,8 +19,8 @@ type CrazySDK = {
 const PLATFORM: string = import.meta.env.VITE_PLATFORM ?? 'dev';
 let cg: CrazySDK | null = null;
 
-/** 'rewarded' = watched to the end; 'no-ad' = none available now; 'off' = ads disabled for this session. */
-export type RewardResult = 'rewarded' | 'no-ad' | 'off';
+/** 'rewarded' = watched to the end; 'no-ad' = none available now; 'adblock' = blocked by the player; 'off' = ads disabled this session. */
+export type RewardResult = 'rewarded' | 'no-ad' | 'adblock' | 'off';
 
 export async function initPlatform() {
   if (PLATFORM !== 'crazygames') return;
@@ -47,7 +47,7 @@ function request(type: 'rewarded' | 'midgame'): Promise<RewardResult> {
   return new Promise((resolve) => sdk.ad.requestAd(type, {
     adStarted: () => setAdPlaying(true), // mute when the ad really starts, not on request
     adFinished: () => { setAdPlaying(false); resolve('rewarded'); },
-    adError: (e) => { setAdPlaying(false); resolve(e.code === 'adsDisabled' ? 'off' : 'no-ad'); },
+    adError: (e) => { setAdPlaying(false); resolve(e.code === 'adsDisabled' ? 'off' : e.code === 'adblock' ? 'adblock' : 'no-ad'); },
   }));
 }
 

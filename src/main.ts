@@ -6,12 +6,21 @@ import {
 } from './logic.ts';
 import { sfx } from './sfx.ts';
 import { initPlatform, showRewarded, showInterstitial, gameplayStart, gameplayStop, happytime } from './ads.ts';
-import { W, H, PANEL, GREEN, ROSE, BLUE, text, loadIcons, drawBlock, button, iconButton, settingsRow, modal, closeModal, goTo } from './ui.ts';
+import { W, H, PANEL, GREEN, ROSE, BLUE, text, loadIcons, drawBlock, button, iconButton, settingsRow, modal, closeModal, goTo, fitOrientation, wideScreen } from './ui.ts';
 import { Title } from './title.ts';
 
 const CELL = 80, GAP = 6;
-const BOARD_X = (W - SIZE * CELL) / 2, BOARD_Y = 290;
-const TRAY_Y = BOARD_Y + SIZE * CELL + 190;
+// Layout, set per orientation in layout(): portrait stacks header/board/tray; landscape puts board left, the rest right.
+let BOARD_X = 0, BOARD_Y = 0, TRAY_X = 0, TRAY_W = 0, TRAY_Y = 0;
+function layout() {
+  const wide = W > H;
+  BOARD_X = wide ? 60 : (W - SIZE * CELL) / 2;
+  BOARD_Y = wide ? (H - SIZE * CELL) / 2 : 290;
+  TRAY_X = wide ? 724 : 0;
+  TRAY_W = W - TRAY_X;
+  TRAY_Y = wide ? 500 : BOARD_Y + SIZE * CELL + 190;
+}
+const boardMidX = () => BOARD_X + SIZE * CELL / 2;
 const TRAY_SCALE = 0.55;
 const LIFT = 140; // dragged piece floats above the finger so it stays visible
 const INTERSTITIAL_EVERY = 2; // games between full-screen ads
@@ -54,6 +63,8 @@ class Play extends Phaser.Scene {
   preload() { loadIcons(this); }
 
   create(data: { resume?: boolean }) {
+    fitOrientation(this.game);
+    layout();
     this.input.enabled = true;
     this.cameras.main.fadeIn(250, 20, 22, 63);
     this.best = Number(store.get('bb-best')) || 0;
@@ -72,7 +83,7 @@ class Play extends Phaser.Scene {
     this.drawHeader();
     this.boardG = this.add.graphics();
     this.ghostG = this.add.graphics();
-    this.add.graphics().fillStyle(PANEL, 0.35).fillRoundedRect(24, TRAY_Y - 120, W - 48, 240, 36);
+    this.add.graphics().fillStyle(PANEL, 0.35).fillRoundedRect(TRAY_X + 24, TRAY_Y - 120, TRAY_W - 48, 240, 36);
     this.drawBoard();
     if (save) this.showTray(); else this.refillTray();
     if (!this.over) {
@@ -109,14 +120,15 @@ class Play extends Phaser.Scene {
   }
 
   drawHeader() {
-    iconButton(this, 70, 80, 'pause', () => this.pause());
+    const wide = W > H, midX = TRAY_X + TRAY_W / 2;
+    iconButton(this, wide ? W - 70 : 70, 80, 'pause', () => this.pause());
 
     const pill = this.add.graphics().fillStyle(PANEL, 0.45).fillRoundedRect(-110, -30, 220, 60, 30);
     const crown = this.add.image(-72, -1, 'crown').setDisplaySize(36, 36);
     this.bestText = this.add.text(-40, 0, String(this.best), text(32)).setOrigin(0, 0.5);
-    this.add.container(W - 140, 80, [pill, crown, this.bestText]);
+    this.add.container(wide ? midX - 110 : W - 140, 80, [pill, crown, this.bestText]);
 
-    this.scoreText = this.add.text(W / 2, 185, String(this.points), text(96)).setOrigin(0.5).setShadow(0, 6, 'rgba(0,0,0,0.3)', 0);
+    this.scoreText = this.add.text(wide ? midX : W / 2, wide ? 240 : 185, String(this.points), text(96)).setOrigin(0.5).setShadow(0, 6, 'rgba(0,0,0,0.3)', 0);
   }
 
   save() {
@@ -179,7 +191,7 @@ class Play extends Phaser.Scene {
 
     const wasBest = this.best > this.startBest;
     this.updateBest();
-    if (!wasBest && this.startBest > 0 && this.best > this.startBest) { this.popText('NEW BEST!', '', BOARD_Y - 40); happytime(); }
+    if (!wasBest && this.startBest > 0 && this.best > this.startBest) { this.popText('NEW BEST!', '', Math.max(BOARD_Y - 40, 100)); happytime(); }
 
     if (this.tray.every((p) => p === null)) this.refillTray();
     else if (!anyMove(this.board, this.tray.filter((p): p is Piece => p !== null))) this.gameOver();
@@ -201,8 +213,8 @@ class Play extends Phaser.Scene {
       piece.cells.forEach(([r, c]) => drawBlock(g, c * CELL + GAP / 2, r * CELL + GAP / 2, BLOCK, piece.color));
       const rows = Math.max(...piece.cells.map(([r]) => r)) + 1;
       const cols = Math.max(...piece.cells.map(([, c]) => c)) + 1;
-      const homeScale = Math.min(TRAY_SCALE, (W / 3 - 40) / (Math.max(rows, cols) * CELL)); // long pieces shrink to fit their slot
-      const homeX = W * (2 * slot + 1) / 6 - (cols * CELL * homeScale) / 2;
+      const homeScale = Math.min(TRAY_SCALE, (TRAY_W / 3 - 40) / (Math.max(rows, cols) * CELL)); // long pieces shrink to fit their slot
+      const homeX = TRAY_X + TRAY_W * (2 * slot + 1) / 6 - (cols * CELL * homeScale) / 2;
       const homeY = TRAY_Y - (rows * CELL * homeScale) / 2;
       const view = this.add.container(homeX, homeY, [g]).setScale(0)
         .setData({ slot, homeX, homeY, homeScale })
@@ -252,7 +264,7 @@ class Play extends Phaser.Scene {
     const t = this.add.text(0, 0, title, text(76, '#ffd84d')).setOrigin(0.5).setStroke('#3a1f6b', 12).setShadow(0, 6, 'rgba(0,0,0,0.35)', 0);
     const parts: Phaser.GameObjects.GameObject[] = [t];
     if (sub) parts.push(this.add.text(0, 62, sub, text(36)).setOrigin(0.5).setStroke('#3a1f6b', 8));
-    const c = this.add.container(W / 2, y, parts).setDepth(50).setScale(0.3); // above the game-over card too
+    const c = this.add.container(boardMidX(), y, parts).setDepth(50).setScale(0.3); // above the game-over card too
     this.tweens.add({ targets: c, scale: 1, duration: 260, ease: 'Back.easeOut' });
     this.tweens.add({ targets: c, y: y - 70, alpha: 0, delay: 650, duration: 450, ease: 'Cubic.easeIn', onComplete: () => c.destroy() });
   }
@@ -269,7 +281,7 @@ class Play extends Phaser.Scene {
     if (store.get('bb-hint-done') || !this.trayViews[0]) return;
     const from = this.trayViews[0];
     const hand = this.add.image(0, 0, 'hand').setDisplaySize(84, 84).setOrigin(0.3, 0.1);
-    const label = this.add.text(W / 2, BOARD_Y + SIZE * CELL / 2, 'Drag blocks onto the board', text(40)).setOrigin(0.5).setStroke('#3a1f6b', 10);
+    const label = this.add.text(boardMidX(), BOARD_Y + SIZE * CELL / 2, 'Drag blocks onto the board', text(40)).setOrigin(0.5).setStroke('#3a1f6b', 10);
     this.hint = this.add.container(0, 0, [hand, label]).setDepth(35);
     hand.setPosition(from.getData('homeX') + 30, from.getData('homeY') + 30);
     this.tweens.add({ targets: hand, x: BOARD_X + 3 * CELL, y: BOARD_Y + 4 * CELL, duration: 1100, hold: 300, repeat: -1, repeatDelay: 400, ease: 'Sine.easeInOut' });
@@ -313,23 +325,30 @@ class Play extends Phaser.Scene {
       this.add.text(0, top + 330, `Best ${this.best}`, text(30, '#ffd84d', '600')).setOrigin(0.5),
     ]);
     let y = top + 460;
-    if (canContinue) { panel.add(button(this, 0, y, 460, 'Continue', 'video', GREEN, () => this.continueWithAd(), 'Watch a short video')); y += 130; }
+    if (canContinue) {
+      const cont = button(this, 0, y, 460, 'Continue', 'video', GREEN, () => this.continueWithAd(cont), 'Watch a short video');
+      panel.add(cont);
+      y += 130;
+    }
     panel.add(button(this, 0, y, 460, 'Play Again', 'replay', ROSE, () => this.playAgain()));
     panel.add(button(this, 0, y + 130, 460, 'Home', 'home', BLUE, () => { gamesFinished++; goTo(this, 'title'); }));
     this.overlay = root;
   }
 
-  async continueWithAd() {
+  async continueWithAd(cont: Phaser.GameObjects.Container) {
+    cont.setAlpha(0.6);
+    (cont.list[3] as Phaser.GameObjects.Text).setText('Loading video...');
     const result = await showRewarded(); // game-over card stays up and blocks taps while the ad runs
-    closeModal(this.overlay);
-    this.overlay = null;
     if (result !== 'rewarded') {
+      // no reward without a finished video: say why in the button's place, keep the rest of the card
       adsOff ||= result === 'off';
-      this.over = false;
-      this.gameOver(); // no reward without a finished video
-      this.popText(result === 'off' ? 'Videos are off here' : 'No video right now', 'Try again later', H - 130);
+      const why = { off: 'Videos are off here', adblock: 'Turn off your ad blocker to watch', 'no-ad': 'No video right now, try later' }[result];
+      cont.parentContainer.add(this.add.text(cont.x, cont.y, why, text(30, '#ffffff', '600')).setOrigin(0.5).setAlpha(0.85));
+      cont.destroy();
       return;
     }
+    closeModal(this.overlay);
+    this.overlay = null;
     this.over = false;
     this.revived = this.watchedAd = true;
     const cleared = revive(this.board);
@@ -359,6 +378,14 @@ Promise.all([document.fonts.load('700 40px Fredoka').catch(() => {}), initPlatfo
     transparent: true, // page gradient shows through
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: W, height: H },
     scene: [Title, Play],
+  });
+  // Rotating the phone (or resizing the window) past square relays the screen; a running game resumes from its save.
+  addEventListener('resize', () => {
+    if (wideScreen() === W > H) return;
+    const play = game.scene.getScene('play') as Play;
+    if (game.scene.isActive('title')) game.scene.getScene('title').scene.restart();
+    else if (game.scene.isActive('play') && !play.over) { play.save(); gameplayStop(); play.scene.restart({ resume: true }); }
+    // game-over card stays as is (scaled to fit); the next screen picks up the new orientation
   });
   if (import.meta.env.DEV) Object.assign(window, { game }); // lets dev tools poke at the scene
 });

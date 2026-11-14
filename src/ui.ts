@@ -2,7 +2,15 @@
 import Phaser from 'phaser';
 import { sfx, isMuted, toggleMute, isVibrateOn, toggleVibrate } from './sfx.ts';
 
-export const W = 720, H = 1280;
+/** Landscape layout on wide screens (desktop, phone held sideways), portrait otherwise. */
+export const wideScreen = () => innerWidth > innerHeight;
+export let W = wideScreen() ? 1280 : 720, H = wideScreen() ? 720 : 1280;
+
+/** Matches the game size to the screen's orientation. First thing in every scene's create(). */
+export function fitOrientation(game: Phaser.Game) {
+  [W, H] = wideScreen() ? [1280, 720] : [720, 1280];
+  if (game.scale.width !== W) game.scale.setGameSize(W, H);
+}
 export const PANEL = 0x0b0e33, CARD = 0x2b2f78, GREEN = 0x3ccf6e, ROSE = 0xff5c8a, BLUE = 0x5468e8;
 const FONT = 'Fredoka, system-ui, sans-serif';
 
@@ -78,7 +86,8 @@ export function modal(scene: Phaser.Scene, cardH: number, title: string) {
   card.lineStyle(4, 0xffffff, 0.12).strokeRoundedRect(-300, top, 600, cardH, 44);
   const heading = scene.add.text(0, top + 80, title, text(52, '#ffd84d')).setOrigin(0.5).setStroke('#3a1f6b', 10);
   const panel = scene.add.container(W / 2, H / 2, [card, heading]).setScale(0.6).setAlpha(0);
-  scene.tweens.add({ targets: panel, scale: 1, alpha: 1, duration: 280, ease: 'Back.easeOut' });
+  scene.tweens.add({ targets: panel, scale: Math.min(1, (H - 60) / cardH), alpha: 1, // tall cards shrink in landscape
+    duration: 280, ease: 'Back.easeOut' });
   const root = scene.add.container(0, 0, [dim, panel]).setDepth(40);
   return { root, panel, top };
 }
