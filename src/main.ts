@@ -27,7 +27,7 @@ const INTERSTITIAL_EVERY = 2; // games between full-screen ads
 const CELL_BG = 0x1c2057;
 
 let gamesFinished = 0; // survives scene restarts
-let adsOff = false; // portal said ads are disabled this session: never show the Continue button
+let adsOff = false; // portal said ads are disabled this session (Basic launch, kids mode): second chance is free
 
 const cellX = (c: number) => BOARD_X + c * CELL + GAP / 2;
 const cellY = (r: number) => BOARD_Y + r * CELL + GAP / 2;
@@ -324,7 +324,7 @@ class Play extends Phaser.Scene {
     gameplayStop();
     this.trayViews.forEach((v) => v.active && v.disableInteractive()); // placed pieces are already destroyed
     const newBest = this.points > this.startBest && this.points > 0;
-    const canContinue = !this.revived && !adsOff && offerContinue(this.points, this.startBest);
+    const canContinue = !this.revived && offerContinue(this.points, this.startBest);
     const { root, panel, top } = modal(this, canContinue ? 820 : 690, 'OUT OF SPACE');
     panel.add([
       this.add.text(0, top + 160, newBest ? 'NEW BEST SCORE' : 'SCORE', text(26, '#ffffff', '600')).setOrigin(0.5).setAlpha(0.7),
@@ -333,7 +333,9 @@ class Play extends Phaser.Scene {
     ]);
     let y = top + 460;
     if (canContinue) {
-      const cont = button(this, 0, y, 460, 'Continue', 'video', GREEN, () => this.continueWithAd(cont), 'Watch a short video');
+      const cont = adsOff
+        ? button(this, 0, y, 460, 'Continue', 'play', GREEN, () => this.continueWithAd(cont), 'Free second chance')
+        : button(this, 0, y, 460, 'Continue', 'video', GREEN, () => this.continueWithAd(cont), 'Watch a short video');
       panel.add(cont);
       y += 130;
     }
@@ -343,16 +345,18 @@ class Play extends Phaser.Scene {
   }
 
   async continueWithAd(cont: Phaser.GameObjects.Container) {
-    cont.setAlpha(0.6);
-    (cont.list[3] as Phaser.GameObjects.Text).setText('Loading video...');
-    const result = await showRewarded(); // game-over card stays up and blocks taps while the ad runs
-    if (result !== 'rewarded') {
-      // no reward without a finished video: say why in the button's place, keep the rest of the card
-      adsOff ||= result === 'off';
-      const why = { off: 'Videos are off here', adblock: 'Turn off your ad blocker to watch', 'no-ad': 'No video right now, try later' }[result];
-      cont.parentContainer.add(this.add.text(cont.x, cont.y, why, text(30, '#ffffff', '600')).setOrigin(0.5).setAlpha(0.85));
-      cont.destroy();
-      return;
+    if (!adsOff) {
+      cont.setAlpha(0.6);
+      (cont.list[3] as Phaser.GameObjects.Text).setText('Loading video...');
+      const result = await showRewarded(); // game-over card stays up and blocks taps while the ad runs
+      adsOff = result === 'off'; // no ads possible this session: the second chance is given anyway
+      if (result === 'adblock' || result === 'no-ad') {
+        // a video exists but didn't play: no reward, say why in the button's place
+        const why = result === 'adblock' ? 'Turn off your ad blocker to watch' : 'No video right now, try later';
+        cont.parentContainer.add(this.add.text(cont.x, cont.y, why, text(30, '#ffffff', '600')).setOrigin(0.5).setAlpha(0.85));
+        cont.destroy();
+        return;
+      }
     }
     closeModal(this.overlay);
     this.overlay = null;
