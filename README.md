@@ -62,4 +62,4 @@ The platform is picked at build time (`VITE_PLATFORM` in `.env.crazygames` / `.e
 
 ## License
 
-Copyright © 2026 Tushar Bhardwaj (Bloom Games). All rights reserved. The code, art and sounds in this repository may not be copied, redistributed or published without permission. See [LICENSE](LICENSE).
+Copyright © 2026 Tushar Bhardwaj (Mini Anon). All rights reserved. The code, art and sounds in this repository may not be copied, redistributed or published without permission. See [LICENSE](LICENSE).
