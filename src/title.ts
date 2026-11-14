@@ -16,6 +16,7 @@ export class Title extends Phaser.Scene {
     this.input.enabled = true;
     this.cameras.main.fadeIn(300, 20, 22, 63);
     document.body.classList.remove('dim');
+    document.getElementById('splash')?.remove(); // page's loading logo hands over to the animated one
     this.petals();
 
     // Logo: one glossy tile per letter, dropping in with a bounce, then gently bobbing.
