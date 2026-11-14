@@ -1,0 +1,18 @@
+@import '@fontsource/fredoka/latin-600.css';
+@import '@fontsource/fredoka/latin-700.css';
+
+html, body, #app {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Gradient lives in CSS so it fills the whole phone screen, not just the game's 9:16 box. */
+body { background: linear-gradient(180deg, #262a6b 0%, #33296a 45%, #164a5a 100%); }
+/* Game-over dim for the strips outside the game box on tall phones; the canvas dims its own area. */
+body::before { content: ''; position: fixed; inset: 0; background: rgba(5, 6, 26, 0.65); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+body.dim::before { opacity: 1; }
+#app { position: relative; }
