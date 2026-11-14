@@ -1,0 +1,19 @@
+Copyright (c) 2026 Tushar Bhardwaj (Bloom Games). All rights reserved.
+
+This repository and everything in it, including source code, artwork, icons,
+sounds, cover images, screenshots and videos (the "Software"), is proprietary.
+
+No license is granted to use, copy, modify, merge, publish, distribute,
+sublicense, sell, host or otherwise make the Software available, in whole or
+in part, without prior written permission from the copyright holder.
+
+Viewing the source code where it is publicly visible does not grant any of
+these rights.
+
+Third-party components keep their own licenses:
+  - Phaser (MIT License)
+  - Fredoka font via @fontsource/fredoka (SIL Open Font License 1.1)
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.

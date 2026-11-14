@@ -2,7 +2,9 @@
 
 A calm, colorful block puzzle for web and mobile. Drag blocks onto an 8×8 board, fill rows or columns to clear them, and chain clears into combos. No timer. Plays in portrait and landscape.
 
-![Block Bloom](store-assets/cover-landscape-1920x1080.png)
+[![Block Bloom: watch the gameplay video](store-assets/cover-landscape-1920x1080.png)](https://youtu.be/qFKYLFeaRgk)
+
+▶️ **[Watch the gameplay demo on YouTube](https://youtu.be/qFKYLFeaRgk)**
 
 ## Features
 
@@ -51,6 +53,13 @@ npm run build:poki         # Poki build + block-bloom-poki.zip
 
 The platform is picked at build time (`VITE_PLATFORM` in `.env.crazygames` / `.env.poki`); the game code is the same for every portal.
 
+## Design docs
+
+| Doc | What's inside |
+|---|---|
+| [High-Level Design](docs/hld.md) | System context, components, platforms and builds, monetization rules, stored data |
+| [Low-Level Design](docs/lld.md) | Module diagram, data types, game rules, screen flow, sequence diagrams, layout, platform layer, sound, tests |
+
 ## License
 
-Copyright © 2026 Bloom Games. All rights reserved. The code, art and sounds in this repository may not be copied, redistributed or published without permission.
+Copyright © 2026 Tushar Bhardwaj (Bloom Games). All rights reserved. The code, art and sounds in this repository may not be copied, redistributed or published without permission. See [LICENSE](LICENSE).
