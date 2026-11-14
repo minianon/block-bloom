@@ -22,7 +22,7 @@ function layout() {
 }
 const boardMidX = () => BOARD_X + SIZE * CELL / 2;
 const TRAY_SCALE = 0.55;
-const LIFT = 140; // dragged piece floats above the finger so it stays visible
+const LIFT = 40; // gap between the finger and the bottom of a dragged piece, so the finger never hides it
 const INTERSTITIAL_EVERY = 2; // games between full-screen ads
 const CELL_BG = 0x1c2057;
 
@@ -91,14 +91,15 @@ class Play extends Phaser.Scene {
       gameplayStart();
     }
 
-    this.input.on('dragstart', (_p: Phaser.Input.Pointer, view: Phaser.GameObjects.Container) => {
+    this.input.on('dragstart', (p: Phaser.Input.Pointer, view: Phaser.GameObjects.Container) => {
       this.hideHint();
       this.tweens.killTweensOf(view);
       view.setScale(1).setDepth(10);
+      this.follow(p, view);
       sfx.pick();
     });
-    this.input.on('drag', (_p: Phaser.Input.Pointer, view: Phaser.GameObjects.Container, x: number, y: number) => {
-      view.setPosition(x, y - LIFT);
+    this.input.on('drag', (p: Phaser.Input.Pointer, view: Phaser.GameObjects.Container) => {
+      this.follow(p, view);
       this.drawGhost(view);
     });
     this.input.on('dragend', (_p: Phaser.Input.Pointer, view: Phaser.GameObjects.Container) => this.drop(view));
@@ -129,6 +130,11 @@ class Play extends Phaser.Scene {
     this.add.container(wide ? midX - 110 : W - 140, 80, [pill, crown, this.bestText]);
 
     this.scoreText = this.add.text(wide ? midX : W / 2, wide ? 240 : 185, String(this.points), text(96)).setOrigin(0.5).setShadow(0, 6, 'rgba(0,0,0,0.3)', 0);
+  }
+
+  /** Dragged piece sits centered just above the finger, the same for every piece and wherever it was grabbed. */
+  follow(p: Phaser.Input.Pointer, view: Phaser.GameObjects.Container) {
+    view.setPosition(p.worldX - view.getData('cols') * CELL / 2, p.worldY - view.getData('rows') * CELL - LIFT);
   }
 
   save() {
@@ -213,11 +219,12 @@ class Play extends Phaser.Scene {
       piece.cells.forEach(([r, c]) => drawBlock(g, c * CELL + GAP / 2, r * CELL + GAP / 2, BLOCK, piece.color));
       const rows = Math.max(...piece.cells.map(([r]) => r)) + 1;
       const cols = Math.max(...piece.cells.map(([, c]) => c)) + 1;
-      const homeScale = Math.min(TRAY_SCALE, (TRAY_W / 3 - 40) / (Math.max(rows, cols) * CELL)); // long pieces shrink to fit their slot
-      const homeX = TRAY_X + TRAY_W * (2 * slot + 1) / 6 - (cols * CELL * homeScale) / 2;
+      const boxX = TRAY_X + 24, boxW = TRAY_W - 48; // the tray's rounded box
+      const homeScale = Math.min(TRAY_SCALE, (boxW / 3 - 40) / (Math.max(rows, cols) * CELL)); // long pieces shrink to fit their slot
+      const homeX = boxX + boxW * (2 * slot + 1) / 6 - (cols * CELL * homeScale) / 2;
       const homeY = TRAY_Y - (rows * CELL * homeScale) / 2;
       const view = this.add.container(homeX, homeY, [g]).setScale(0)
-        .setData({ slot, homeX, homeY, homeScale })
+        .setData({ slot, homeX, homeY, homeScale, rows, cols })
         .setInteractive(new Phaser.Geom.Rectangle(-CELL / 2, -CELL / 2, (cols + 1) * CELL, (rows + 1) * CELL), Phaser.Geom.Rectangle.Contains);
       this.tweens.add({ targets: view, scale: homeScale, duration: 260, delay: slot * 70, ease: 'Back.easeOut' });
       this.input.setDraggable(view);
